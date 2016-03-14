@@ -78,6 +78,10 @@ fn le32(s: &[u8]) -> u32 {
     (s[0] as u32) | (s[1] as u32) << 8 | (s[2] as u32) << 16 | (s[3] as u32) << 24
 }
 
+fn le16(s: &[u8]) -> u16 {
+    (s[0] as u16) | (s[1] as u16) << 8
+}
+
 fn parse_packet(stdout: &mut Write, packet: Vec<u8>) -> io::Result<()> {
     if packet.len() < 24 || packet[0] != 0x79 || packet[2] != 0 {
         print!("[unknown packet: ");
@@ -88,6 +92,7 @@ fn parse_packet(stdout: &mut Write, packet: Vec<u8>) -> io::Result<()> {
     
     let (header, rest) = packet.split_at(20);
     let timestamp = le32(&header[6..10]);
+    let lineno = le16(&header[12..14]);
     let (msg, rest) = split_byte(rest, 0);
     let (file, _) = split_byte(rest, 0);
     
@@ -97,7 +102,7 @@ fn parse_packet(stdout: &mut Write, packet: Vec<u8>) -> io::Result<()> {
     try!(stdout.write_all(msg));
     try!(write!(stdout, " ("));
     try!(stdout.write_all(file));
-    try!(write!(stdout, ")\n"));
+    try!(write!(stdout, ":{})\n", lineno));
     
     Ok(())
 }
