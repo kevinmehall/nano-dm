@@ -10,7 +10,10 @@ fn main() {
     
     match device {
         Ok(handle) => {
-            run(handle).unwrap();
+            if let Err(e) = run(handle) {
+                println!("{}", e);
+                process::exit(2);
+            }
         },
         Err(libusb::Error::NotFound) => {
             println!("Device not found");
