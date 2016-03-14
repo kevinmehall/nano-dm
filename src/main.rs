@@ -77,6 +77,13 @@ fn split_byte(s: &[u8], sep: u8) -> (&[u8], &[u8]) {
     }
 }
 
+fn strip_trailing_newlines(mut s: &[u8]) -> &[u8] {
+    while s.ends_with(b"\n") {
+        s = &s[0..s.len()-1];
+    }
+    s
+}
+
 fn le32(s: &[u8]) -> u32 {
     (s[0] as u32) | (s[1] as u32) << 8 | (s[2] as u32) << 16 | (s[3] as u32) << 24
 }
@@ -102,7 +109,7 @@ fn parse_packet(stdout: &mut Write, packet: Vec<u8>) -> io::Result<()> {
     //for b in &packet { print!("{:02x} ", b); }
     
     try!(write!(stdout, "{:10}: ", timestamp));
-    try!(stdout.write_all(msg));
+    try!(stdout.write_all(strip_trailing_newlines(msg)));
     try!(write!(stdout, " ("));
     try!(stdout.write_all(file));
     try!(write!(stdout, ":{})\n", lineno));
