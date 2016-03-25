@@ -94,9 +94,9 @@ fn le16(s: &[u8]) -> u16 {
 
 fn parse_packet(stdout: &mut Write, packet: Vec<u8>) -> io::Result<()> {
     if packet.len() < 24 || packet[0] != 0x79 || packet[2] != 0 {
-        print!("[unknown packet: ");
-        for b in &packet { print!("{:02x}", b); }
-        println!("]");
+        //print!("[unknown packet: ");
+        //for b in &packet { print!("{:02x}", b); }
+        //println!("]");
         return Ok(());
     }
 
