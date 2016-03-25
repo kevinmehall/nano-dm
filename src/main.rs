@@ -7,7 +7,7 @@ use std::io::{self, Write};
 fn main() {
     let context = libusb::Context::new().unwrap();
     let device = find_device(&context);
-    
+
     match device {
         Ok(handle) => {
             if let Err(e) = run(handle) {
@@ -37,26 +37,26 @@ fn run(mut handle: libusb::DeviceHandle) -> Result<(), libusb::Error> {
     let mut stdout = io::stdout();
     println!("Found device");
     try!(handle.claim_interface(0));
-    
+
     let mut read_buf = [0; 4096];
-    
+
     loop {
         println!("Connecting DMSS");
-        
+
         try!(handle.write_bulk(0x01, &[0x0c, 0x00, 0x00, 0x00,  0x00, 0x47, 0xb8, 0x7e], Duration::from_secs(10)));
         let len = try!(handle.read_bulk(0x81, &mut read_buf, Duration::from_secs(10)));
         let rx = &read_buf[0..len];
-        
+
         if rx == &[0x13, 0x0c, 0x00, 0x00,  0x00, 0x00, 0x72, 0xce, 0x7e] {
             break;
         } else {
             thread::sleep(Duration::from_millis(100));
         }
     }
-    
+
     try!(handle.write_bulk(0x01, &[0x7d, 0x5d, 0x04, 0x34,  0x21, 0x34, 0x21, 0x00,  0x00, 0x1f, 0x00, 0x00,  0x00, 0xab, 0xdf, 0x7e], Duration::from_secs(1)));
     println!("DMSS is connected");
-    
+
     loop {
         let len = try!(handle.read_bulk(0x81, &mut read_buf, Duration::from_secs(0)));
 
@@ -99,21 +99,21 @@ fn parse_packet(stdout: &mut Write, packet: Vec<u8>) -> io::Result<()> {
         println!("]");
         return Ok(());
     }
-    
+
     let (header, rest) = packet.split_at(20);
     let timestamp = le32(&header[6..10]);
     let lineno = le16(&header[12..14]);
     let (msg, rest) = split_byte(rest, 0);
     let (file, _) = split_byte(rest, 0);
-    
+
     //for b in &packet { print!("{:02x} ", b); }
-    
+
     try!(write!(stdout, "{:10}: ", timestamp));
     try!(stdout.write_all(strip_trailing_newlines(msg)));
     try!(write!(stdout, " ("));
     try!(stdout.write_all(file));
     try!(write!(stdout, ":{})\n", lineno));
-    
+
     Ok(())
 }
 
@@ -130,7 +130,7 @@ impl<I> Hdlc<I> where I:Iterator<Item=u8> {
             end: false,
         }
     }
-    
+
     fn input_byte(&mut self) -> Option<u8> {
         let x = self.input.next();
         self.end |= x.is_none();
@@ -144,9 +144,9 @@ impl<I> Iterator for Hdlc<I> where I:Iterator<Item=u8> {
         if self.end {
             return None;
         }
-        
+
         let mut out = vec![];
-        
+
         loop {
             match self.input_byte() {
                 Some(0x7e) | None => break,
@@ -159,7 +159,7 @@ impl<I> Iterator for Hdlc<I> where I:Iterator<Item=u8> {
                 Some(c) => out.push(c),
             };
         }
-        
+
         Some(out)
     }
 }
